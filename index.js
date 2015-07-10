@@ -1,7 +1,7 @@
 var http = require("http")
     , shoe = require("shoe")
     , path = require("path")
-    , watchr = require("watchr")
+    , watch = require("watch")
     , bundle = require("browserify-server")
     , openStreams = []
 
@@ -19,11 +19,16 @@ function LiveReloadServer(options) {
             body: "require('./browser.js')(" + port + ")"
         })
 
-    watchr.watch({
-        paths: paths
-        , listener: reload
-        , ignoreHiddenFiles: true
-        , ignorePatterns: true
+    paths.forEach(function (path) {
+        watch.watchTree(path, {
+            ignoreDotFiles: true
+        }, function (fileName, curr, prev) {
+            if (typeof fileName == "object" && prev === null && curr === null) {
+                // Finished walking the tree
+            } else {
+                reload(fileName)
+            }
+        })
     })
 
     sock.install(server, "/shoe")
